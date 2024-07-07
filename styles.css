@@ -41,9 +41,11 @@ button {
 }
 
 .board {
+    position: relative;
     display: grid;
     grid-template-columns: repeat(10, 1fr);
     grid-template-rows: repeat(10, 1fr);
+    border: 1px solid white;
     border: 1rem solid #3F6D8F;
 }
 
@@ -67,4 +69,9 @@ button {
 
 .row {
     display: flex;
+}
+
+.space-between{
+    display: flex;
+    justify-content: space-between;
 }

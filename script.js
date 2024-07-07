@@ -133,62 +133,135 @@ class Player {
     }
 }
 
-const screen = document.querySelector('.screen')
-
-let currentShipSize = 5; 
-let currentOrientation = 'vertical';
-
 const playComputerGame = () => {
     screen.innerHTML = 
         `<div class="wrapper">
             <h1>Place Your Ships</h1>
             <div id="placementBoard" class="board"></div>
+            <div class="space-between">
+                <button onclick="rotateShip()">Rotate</button>
+                <div>
+                    <button onclick="resetPlacement()">Reset</button>
+                    <button onclick="resetPlacement()">Continue</button>
+                </div>
+            </div>
         </div>`;
     const board = screen.querySelector('#placementBoard')
     for (let i = 0; i < 100; i++) {
         const cell = document.createElement('div');
         cell.classList.add('cell');
+        cell.dataset.index = i;
         cell.addEventListener('mouseenter', () => hoverShip(i));
         cell.addEventListener('mouseleave', () => clearHover());
+        cell.addEventListener('click', () => placeShip(i));
         board.appendChild(cell);
     }
 }
 
+const screen = document.querySelector('.screen')
+
+let currentShipSize = 5; 
+let currentOrientation = 'horizontal';
+
+const positions = [
+    { y: 0, x: 0, orientation: "horizontal" }
+];
+const placementBoard = [];
+
+const rotateShip = () => currentOrientation === 'horizontal' ? currentOrientation = 'vertical' : currentOrientation = 'horizontal'
+const resetPlacement = () => {
+    positions.splice(0, positions.length)
+    placementBoard.splice(0, placementBoard.length)
+    clearHover()
+}
+
+
+function placeShip(startIndex) {
+    if (validatePlacement(startIndex)) {
+      let shipDetails = { orientation: currentOrientation }; 
+      for (let i = 0; i < currentShipSize; i++) {
+        const index = currentOrientation === 'horizontal' ? startIndex + i : startIndex + 10 * i;
+        if (index < 100) {
+            placementBoard[index] = 'ship'; 
+            document.querySelectorAll('.cell')[index].style.backgroundColor = '#00bfff'; 
+            if (i === 0) { 
+                shipDetails.y = Math.floor(index / 10);
+                shipDetails.x = index % 10;
+            }
+        }
+      }
+      positions.push(shipDetails); 
+    } else {
+      console.log("Invalid placement. Try again.");
+    }
+}
+
+function validatePlacement(startIndex) {
+    for (let i = 0; i < currentShipSize; i++) {
+        const index = currentOrientation === 'horizontal' ? startIndex + i : startIndex + 10 * i;
+        if (index < 0 || index >= 100) return false;
+
+        if (currentOrientation === 'horizontal' && Math.floor(startIndex / 10) !== Math.floor(index / 10)) {
+            return false; 
+        }
+
+        if (currentOrientation === 'vertical' && (index >= 100 || Math.floor(index / 10) !== Math.floor(startIndex / 10) + i)) {
+            return false;
+        }
+
+        if (!isValidPlacement(index)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+function isValidPlacement(index) {
+    const adjacentIndices = [
+        index, index - 1, index + 1,
+        index - 9, index - 10, index - 11,
+        index + 9, index + 10, index + 11
+    ];
+
+    for (let adjIndex of adjacentIndices) {
+        if (adjIndex < 0 || adjIndex >= 100) continue; 
+        if (Math.abs(adjIndex % 10 - index % 10) > 1) continue; 
+        if (placementBoard[adjIndex] === 'ship') return false; 
+    }
+    return true;
+}
+
 function hoverShip(startIndex) {
     clearHover();
-    const cells = document.querySelectorAll('.cell');
-    let validPlacement = true;
-    
-    for (let i = 0; i < currentShipSize; i++) {
-      const index = currentOrientation === 'horizontal' ? startIndex + i : startIndex + 10 * i;
-      if (!validHover(startIndex, index, i)) {
-        validPlacement = false;
-        break;
-      }
-    }
-    
-    for (let i = 0; i < currentShipSize; i++) {
-      const index = currentOrientation === 'horizontal' ? startIndex + i : startIndex + 10 * i;
-      if (index < 100 && validHover(startIndex, index) && validPlacement) {
-        cells[index].style.backgroundColor = '#add8e6';
-      } else if (index < 100  && validHover(startIndex, index)) {
-        cells[index].style.backgroundColor = '#ff6347';
-      }
+    if (!validatePlacement(startIndex)) {
+      updateHoverEffect(startIndex, false);
+    } else {
+      updateHoverEffect(startIndex, true);
     }
   }
 
-function validHover(startIndex, currentIndex) {
-    if (currentOrientation === 'horizontal' && Math.floor(startIndex / 10) !== Math.floor(currentIndex / 10) ||
-        currentOrientation === 'vertical'  && currentIndex >= 100) {
-      return false;
+function updateHoverEffect(startIndex, isValid) {
+    const cells = document.querySelectorAll('.cell');
+    for (let i = 0; i < currentShipSize; i++) {
+      const index = currentOrientation === 'horizontal' ? 
+      Math.floor((startIndex + i) / 10) === Math.floor(startIndex / 10) ? startIndex + i : startIndex
+      : startIndex + 10 * i;
+      if (index < 100) {
+        cells[index].style.backgroundColor = isValid ? '#add8e6' : '#ff6347';
+      }
     }
-    return true;
 }
   
 function clearHover() {
     const cells = document.querySelectorAll('.cell');
     cells.forEach(cell => {
-      cell.style.backgroundColor = null;
+      const index = parseInt(cell.dataset.index);
+      if (placementBoard[index] !== 'ship') {
+        cell.style.backgroundColor = null; 
+      } else {
+        cell.style.backgroundColor = '#00bfff'; 
+      }
     });
 }
 
