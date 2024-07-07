@@ -1,0 +1,70 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #eee;
+}
+
+.screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    margin: auto;
+    gap: 1.4rem;
+}
+
+.wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+button {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #3F6D8F;
+    color: #eee;
+    border: none;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    border: 1rem solid #3F6D8F;
+}
+
+.cell {
+    background-color: #3F6D8F;
+    border: 1px solid #ccc;
+    text-align: center;
+}
+
+#placementBoard .cell{
+    width: 4rem;
+    height: 4rem;
+    line-height: 4rem;
+}
+
+#playerBoard .cell, #opponentBoard .cell{
+    width: 3rem;
+    height: 3rem;
+    line-height: 3rem;
+}
+
+.row {
+    display: flex;
+}

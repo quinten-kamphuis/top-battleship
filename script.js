@@ -133,4 +133,65 @@ class Player {
     }
 }
 
+const screen = document.querySelector('.screen')
+
+let currentShipSize = 5; 
+let currentOrientation = 'vertical';
+
+const playComputerGame = () => {
+    screen.innerHTML = 
+        `<div class="wrapper">
+            <h1>Place Your Ships</h1>
+            <div id="placementBoard" class="board"></div>
+        </div>`;
+    const board = screen.querySelector('#placementBoard')
+    for (let i = 0; i < 100; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.addEventListener('mouseenter', () => hoverShip(i));
+        cell.addEventListener('mouseleave', () => clearHover());
+        board.appendChild(cell);
+    }
+}
+
+function hoverShip(startIndex) {
+    clearHover();
+    const cells = document.querySelectorAll('.cell');
+    let validPlacement = true;
+    
+    for (let i = 0; i < currentShipSize; i++) {
+      const index = currentOrientation === 'horizontal' ? startIndex + i : startIndex + 10 * i;
+      if (!validHover(startIndex, index, i)) {
+        validPlacement = false;
+        break;
+      }
+    }
+    
+    for (let i = 0; i < currentShipSize; i++) {
+      const index = currentOrientation === 'horizontal' ? startIndex + i : startIndex + 10 * i;
+      if (index < 100 && validHover(startIndex, index) && validPlacement) {
+        cells[index].style.backgroundColor = '#add8e6';
+      } else if (index < 100  && validHover(startIndex, index)) {
+        cells[index].style.backgroundColor = '#ff6347';
+      }
+    }
+  }
+
+function validHover(startIndex, currentIndex) {
+    if (currentOrientation === 'horizontal' && Math.floor(startIndex / 10) !== Math.floor(currentIndex / 10) ||
+        currentOrientation === 'vertical'  && currentIndex >= 100) {
+      return false;
+    }
+    return true;
+}
+  
+function clearHover() {
+    const cells = document.querySelectorAll('.cell');
+    cells.forEach(cell => {
+      cell.style.backgroundColor = null;
+    });
+}
+
+playComputerGame();
+
 module.exports = { Ship, Gameboard, Player }
