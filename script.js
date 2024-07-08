@@ -309,7 +309,6 @@ const startPlayerGame = () => {
         const { y, x } = indexToLocation(index)
         if(player.gameboard.hitsGrid[y][x] === null){
             if (player.makeMove(y, x) === 'hit'){
-                showOverlay()
                 loadBoards()
                 updateBoard()
                 checkWin()
