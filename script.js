@@ -1,119 +1,3 @@
-const placeholderMap = {
-    "2,2": {
-        "length": 5,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "2,3": {
-        "length": 5,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "2,4": {
-        "length": 5,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "2,5": {
-        "length": 5,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "2,6": {
-        "length": 5,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "7,1": {
-        "length": 4,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "7,2": {
-        "length": 4,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "7,3": {
-        "length": 4,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "7,4": {
-        "length": 4,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "5,6": {
-        "length": 3,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "5,7": {
-        "length": 3,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "5,8": {
-        "length": 3,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "5,2": {
-        "length": 3,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "5,3": {
-        "length": 3,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "5,4": {
-        "length": 3,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "8,7": {
-        "length": 2,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    "8,8": {
-        "length": 2,
-        "orientation": "horizontal",
-        "hits": 0
-    }
-}
-
-const placeholderShips = [
-    {
-        "length": 5,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    {
-        "length": 4,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    {
-        "length": 3,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    {
-        "length": 3,
-        "orientation": "horizontal",
-        "hits": 0
-    },
-    {
-        "length": 2,
-        "orientation": "horizontal",
-        "hits": 0
-    }
-]
-
 const create2DArray = (size, initialValue = null) => {
     let array = [];
     for (let i = 0; i < size; i++) {
@@ -125,6 +9,8 @@ const create2DArray = (size, initialValue = null) => {
     }
     return array;
 }
+
+const indexToLocation = (index) => ({ y: Math.floor(index / 10), x: index % 10 });
 
 class Ship {
     constructor(length, orientation = null) {
@@ -145,78 +31,24 @@ class Ship {
 
 class Gameboard {
     constructor() {
-        this.grid = create2DArray(10);
-        this.positionMap = placeholderMap
-        this.ships = placeholderShips
-    }
-
-    placeShip(y, x, ship) {
-        const length = ship.length;
-        const orientation = ship.orientation;
-        if (this.isValidPlacement(y, x, length, orientation)) {
-            for (let i = 0; i < ship.length; i++) {
-                let posY = orientation === "vertical" ? y + i : y;
-                let posX = orientation === "horizontal" ? x + i : x;
-                this.positionMap[`${posY},${posX}`] = ship;
-            }
-            this.ships.push(ship)
-        } else {
-            this.positionMap = {}
-            this.ships = []
-            console.log('Invalid ship placement, ships did not place');
-        }
-    }
-
-    isValidPlacement(y, x, length, orientation) {
-        const directions = [-1, 0, 1];
-        
-        for (let i = 0; i < length; i++) {
-            let currentX = orientation === "horizontal" ? x + i : x;
-            let currentY = orientation === "vertical" ? y + i : y;
-
-            if (currentY > 9 || currentX > 9) return false;
-    
-            for (let dy of directions) {
-                for (let dx of directions) {
-                    let checkY = currentY + dy;
-                    let checkX = currentX + dx;
-                    let key = `${checkY},${checkX}`;
-                    if (this.positionMap[key]) {
-                        return false;
-                    }
-                }
-            }
-        }    
-        return true
+        this.hitsGrid = create2DArray(10);
+        this.shipsGrid = create2DArray(10);
     }
 
     receiveAttack(y, x) {
-        const key = `${y},${x}`;
-        if (this.positionMap[key]) {
-            this.positionMap[key].hit();
-            this.grid[y][x] = 'hit';
-            if (this.positionMap[key].isSunk()) {
-                return "Hit and sunk!";
+        if (this.shipsGrid[y][x]) {
+            this.shipsGrid[y][x].hit();
+            this.hitsGrid[y][x] = 'hit';
+            if (this.shipsGrid[y][x].isSunk()) {
+                console.log('Hit and sunk')
+                return "hit";
             } else {
-                return "Hit!";
+                return "hit";
             }
         } else {
-            this.grid[y][x] = 'miss';
-            return "Miss!";
+            this.hitsGrid[y][x] = 'miss';
+            return "miss";
         }
-    }
-
-    allSunk() {
-        let shipsNotSunk = 0;
-        Object.values(this.positionMap).forEach(ship => {
-            if (!ship.isSunk()){
-                shipsNotSunk++;
-            }
-        });
-        if (shipsNotSunk) {
-            return false
-        }
-        return true
     }
 }
 
@@ -232,31 +64,110 @@ class Player {
             new Ship(3), // Submarine
             new Ship(2)  // Destroyer
         ];
-        this.currentShipIndex = 0;
-    }
-
-    placeShips(positions) {
-        this.gameboard.positionMap = {}
-        this.gameboard.ships = []
-        this.ships.forEach((ship, index) => {
-            const pos = positions[index];
-            ship.orientation = pos.orientation;
-            this.gameboard.placeShip(pos.y, pos.x, ship);
-        });
-        if (this.gameboard.ships.length !== 0) return true
-        if (this.gameboard.ships.length === 0) return false
     }
 
     makeMove(y, x) {
-        // For human players, x and y would come from user input
-        // For AI, generate x and y based on some logic
         return this.gameboard.receiveAttack(y, x);
+    }
+
+    allShipsSunk() {
+        let shipsNotSunk = 0;
+        this.ships.forEach(ship => ship.isSunk() ? true : shipsNotSunk++)
+        if (shipsNotSunk !== 0){
+            return false
+        }
+        return true
     }
 }
 
 const screen = document.querySelector('.screen')
 
-const startGame = () => {
+const startComputerGame = () => {
+
+    const updateBoard = () => {
+        const playerCells = document.querySelectorAll('#playerBoard .cell');
+        const opponentCells = document.querySelectorAll('#opponentBoard .cell');
+        playerCells.forEach(cell => {
+            const { y, x } = indexToLocation(parseInt(cell.dataset.index));
+            if (player1.gameboard.hitsGrid[y][x] === 'hit') {
+                cell.classList.add('hit'); 
+            }
+            if (player1.gameboard.hitsGrid[y][x] === 'miss') {
+                cell.classList.add('miss'); 
+            } 
+        });
+        opponentCells.forEach(cell => {
+            const { y, x } = indexToLocation(parseInt(cell.dataset.index));
+            if (player2.gameboard.hitsGrid[y][x] === 'hit') {
+                cell.classList.add('hit'); 
+            }
+            if (player2.gameboard.hitsGrid[y][x] === 'miss') {
+                cell.classList.add('miss'); 
+            } 
+        });
+    }
+
+    const getComputerMove = () => {
+        const board = player1.gameboard.hitsGrid
+        let emptySpots = [];
+
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[i].length; j++) {
+                if (board[i][j] === null) { 
+                    emptySpots.push({ y: i, x: j });
+                }
+            }
+        }
+        if (emptySpots.length > 0) {
+            const randomIndex = Math.floor(Math.random() * emptySpots.length);
+            return emptySpots[randomIndex];
+        } else {
+            return null;
+        }
+    }
+
+    const checkWin = () => {
+        if (player2.allShipsSunk()){
+            screen.innerHTML = 
+            `<div class="wrapper">
+                <h2>You won!</h2>
+                <p>Congrats</p>
+                <button onclick="location.reload()">Home</button>
+            </div>`;
+        }
+        if (player1.allShipsSunk()){
+            screen.innerHTML = 
+            `<div class="wrapper">
+                <h2>You lost!</h2>
+                <p>Too bad</p>
+                <button onclick="location.reload()">Home</button>
+            </div>`;
+        }
+    }
+
+    const makeComputerMove = () => {
+        if (player1.makeMove(...Object.values(getComputerMove())) === 'hit'){
+            checkWin()
+            updateBoard()
+            makeComputerMove()
+        } else {
+            checkWin()
+            updateBoard()
+        }
+    }
+
+    const makeMove = (index) => {
+        const { y, x } = indexToLocation(index)
+        if(player2.gameboard.hitsGrid[y][x] === null){
+            if (player2.makeMove(y, x) === 'hit'){
+                updateBoard()
+                checkWin()
+            } else if (player2.makeMove(y, x) === 'miss') {
+                makeComputerMove()
+            }
+        }
+    }
+
     screen.innerHTML = 
         `<div class="wrapper">
             <h2>You</h2>
@@ -274,9 +185,9 @@ const startGame = () => {
         const cell = document.createElement('div');
         cell.classList.add('cell');
         cell.dataset.index = i;
-        cell.addEventListener('click', () => placeShip(i));
-        if (placementBoard[index] !== 'ship') {
-            cell.style.backgroundColor = null; 
+        const { y, x } = indexToLocation(i)
+        if (player1.gameboard.shipsGrid[y][x] !== null) {
+            cell.style.backgroundColor = '#00bfff'; 
         }
         playerBoard.appendChild(cell);
     }
@@ -285,43 +196,181 @@ const startGame = () => {
         cell.classList.add('cell');
         cell.classList.add('clickable');
         cell.dataset.index = i;
-        cell.addEventListener('click', () => placeShip(i));
+        cell.addEventListener('click', () => makeMove(i));
         opponentBoard.appendChild(cell);
+    }
+}
+
+const startPlayerGame = () => {
+
+    const updateBoard = () => {
+        const opponent = playerToMove === player1 ? player2 : player1
+        const playerCells = document.querySelectorAll('#playerBoard .cell');
+        const opponentCells = document.querySelectorAll('#opponentBoard .cell');
+        playerCells.forEach(cell => {
+            const { y, x } = indexToLocation(parseInt(cell.dataset.index));
+            if (playerToMove.gameboard.hitsGrid[y][x] === 'hit') {
+                cell.classList.add('hit'); 
+            }
+            if (playerToMove.gameboard.hitsGrid[y][x] === 'miss') {
+                cell.classList.add('miss'); 
+            } 
+        });
+        opponentCells.forEach(cell => {
+            const { y, x } = indexToLocation(parseInt(cell.dataset.index));
+            if (opponent.gameboard.hitsGrid[y][x] === 'hit') {
+                cell.classList.add('hit'); 
+            }
+            if (opponent.gameboard.hitsGrid[y][x] === 'miss') {
+                cell.classList.add('miss'); 
+            } 
+        });
+    }
+
+    screen.innerHTML = 
+        `<div class="wrapper">
+            <h2>You</h2>
+            <div id="playerBoard" class="board"></div>
+        </div>
+        <div class="wrapper">
+            <h2>Opponent</h2>
+            <div id="opponentBoard" class="board"></div>
+        </div>`;
+
+    const playerBoard = screen.querySelector('#playerBoard')
+    const opponentBoard = screen.querySelector('#opponentBoard')
+    
+    let playerToMove = player1;
+
+    const loadBoards = () => {
+        playerBoard.innerHTML = ''
+        opponentBoard.innerHTML = ''
+        for (let i = 0; i < 100; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.index = i;
+            const { y, x } = indexToLocation(i)
+            if (playerToMove.gameboard.shipsGrid[y][x] !== null) {
+                cell.style.backgroundColor = '#00bfff'; 
+            }
+            playerBoard.appendChild(cell);
+        }
+        for (let i = 0; i < 100; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.classList.add('clickable');
+            cell.dataset.index = i;
+            cell.addEventListener('click', () => makeMove(i, playerToMove === player1 ? player2 : player1));
+            opponentBoard.appendChild(cell);
+        }
+    }
+
+    loadBoards()
+
+    const checkWin = () => {
+        if (player2.allShipsSunk()){
+            screen.innerHTML = 
+            `<div class="wrapper">
+                <h2>${player1.name} won!</h2>
+                <p>Congrats</p>
+                <button onclick="location.reload()">Home</button>
+            </div>`;
+        }
+        if (player1.allShipsSunk()){
+            screen.innerHTML = 
+            `<div class="wrapper">
+                <h2>${player2.name} won!</h2>
+                <p>Congrats</p>
+                <button onclick="location.reload()">Home</button>
+            </div>`;
+        }
+    }
+
+    const showOverlay = () => {
+        const overlay = document.createElement('div');
+        overlay.className = 'overlay';
+    
+        const message = document.createElement('h1');
+        message.textContent = 'Switch players'
+    
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Done';
+        closeButton.className = 'button';
+        closeButton.onclick = function() {
+            document.body.removeChild(overlay);
+        };
+    
+        overlay.appendChild(message);
+        overlay.appendChild(closeButton);
+        document.body.appendChild(overlay);
+    }
+
+    const makeMove = (index, player) => {
+        const { y, x } = indexToLocation(index)
+        if(player.gameboard.hitsGrid[y][x] === null){
+            if (player.makeMove(y, x) === 'hit'){
+                showOverlay()
+                loadBoards()
+                updateBoard()
+                checkWin()
+            } else if (player.makeMove(y, x) === 'miss') {
+                playerToMove = playerToMove === player1 ? player2 : player1
+                showOverlay()
+                loadBoards()
+                updateBoard()
+                checkWin()
+            }
+        }
+        console.log('Player to move: ' + playerToMove.name)
     }
 }
 
 let player1;
 let player2;
+let gameType;
 
-const playComputerGame = () => {
-    if (!player1 || !player2) {
-        player1 = new Player("Player 1")
-        player2 = new Player("Computer")
-    }
-    if (player1.gameboard.ships.length !== 5){
-        currentPlayer = player1
-        loadPlacement()
-    } else if (player2.gameboard.ships.length !== 5) {
-        currentPlayer = player2
-        loadPlacement()
-    } else if (player1.gameboard.ships.length === 5 && player2.gameboard.ships.length === 5) {
-        startGame()
+let currentPlayer;
+let currentShip = 0; 
+let currentShipSize;
+let currentOrientation = 'horizontal';
+
+const placementGrid = create2DArray(10);
+
+const setPlacement = () => {
+    currentPlayer.gameboard.shipsGrid = placementGrid.map(row => [...row]);
+    setTimeout(() => playGame(), 10)
+}
+
+const playGame = () => {
+    if (gameType === 'computer'){
+        playComputerGame()
+    } else if (gameType === 'player'){
+        playPlayerGame()
+    } else {
+        console.error('Invalid game type')
     }
 }
 
-playComputerGame()
+const rotateShip = () => currentOrientation === 'horizontal' ? currentOrientation = 'vertical' : currentOrientation = 'horizontal'
+const resetPlacement = () => {
+    placementGrid.forEach((row, rowIndex) => {row.forEach((element, colIndex) => {placementGrid[rowIndex][colIndex] = null});});
+    currentShip = 0; 
+    updateShipSize()
+    clearHover()
+}
 
 const loadPlacement = () => {
 
-    setTimeout(() => updateShipSize(), 0)
+    setTimeout(() => updateShipSize(), 10)
 
     screen.innerHTML = 
         `<div class="wrapper">
             <h1>${currentPlayer.name}, Place Your Ships</h1>
             <div id="placementBoard" class="board"></div>
             <div class="space-between">
-                <button onclick="rotateShip()">Rotate</button>
+                <button onclick="rotateShip()" class="rotate-ship">Rotate</button>
                 <div>
+                    <button onclick="randomPlacement()">Random</button>
                     <button onclick="resetPlacement()">Reset</button>
                     <button onclick="setPlacement()" class="finish-placement disabled">Continue</button>
                 </div>
@@ -341,62 +390,82 @@ const loadPlacement = () => {
     resetPlacement();
 }
 
-const setPlacement = () => {
-    if (currentPlayer.placeShips(positions)) {
-        console.log('Ships placed')
-        playComputerGame()
-    } else {
-        console.warn('Something went wrong, ships did not place')
-    }
-}
-
-let currentShipSize = 5; 
-let currentOrientation = 'horizontal';
-let currentPlayer;
-
-const positions = [];
-const placementBoard = [];
-
 const updateShipSize = () => {
-    document.querySelector(".finish-placement").classList.add('disabled')
-    if (positions.length < 4) {
-        currentShipSize = 5 - positions.length
-    } else if (positions.length === 4){
-        currentShipSize = 2
-    } else if (positions.length === 5){
-        currentShipSize = 0
+    currentShipSize = currentPlayer.ships[currentShip] ? currentPlayer.ships[currentShip].length : 0
+    if (currentShip >= 5) {
         document.querySelector(".finish-placement").classList.remove('disabled')
+        document.querySelector(".rotate-ship").classList.add('disabled')
+    } else {
+        document.querySelector(".finish-placement").classList.add('disabled')
+        document.querySelector(".rotate-ship").classList.remove('disabled')
     }
 }
 
-const rotateShip = () => currentOrientation === 'horizontal' ? currentOrientation = 'vertical' : currentOrientation = 'horizontal'
-const resetPlacement = () => {
-    positions.splice(0, positions.length)
-    placementBoard.splice(0, placementBoard.length)
-    updateShipSize()
-    clearHover()
+const playComputerGame = () => {
+    gameType = 'computer'
+    if (!player1 || !player2) {
+        player1 = new Player("Player 1")
+        player2 = new Player("Computer")
+    }
+    if (player1.gameboard.shipsGrid.flat().reduce((acc, val) => acc + (val === null ? 1 : 0), 0) !== 83){
+        currentPlayer = player1
+        loadPlacement()
+    } else if (player2.gameboard.shipsGrid.flat().reduce((acc, val) => acc + (val === null ? 1 : 0), 0) !== 83) {
+        currentPlayer = player2
+        loadPlacement()
+        randomPlacement()
+        setPlacement()
+    } else if (player1.gameboard.shipsGrid.flat().reduce((acc, val) => acc + (val === null ? 1 : 0), 0) === 83 &&
+                player2.gameboard.shipsGrid.flat().reduce((acc, val) => acc + (val === null ? 1 : 0), 0) === 83) {
+        startComputerGame()
+    }
+}
+
+const playPlayerGame = () => {
+    gameType = 'player'
+    if (!player1 || !player2) {
+        player1 = new Player("Player 1")
+        player2 = new Player("Player 2")
+    }
+    if (player1.gameboard.shipsGrid.flat().reduce((acc, val) => acc + (val === null ? 1 : 0), 0) !== 83){
+        currentPlayer = player1
+        loadPlacement()
+    } else if (player2.gameboard.shipsGrid.flat().reduce((acc, val) => acc + (val === null ? 1 : 0), 0) !== 83) {
+        currentPlayer = player2
+        loadPlacement()
+    } else if (player1.gameboard.shipsGrid.flat().reduce((acc, val) => acc + (val === null ? 1 : 0), 0) === 83 &&
+                player2.gameboard.shipsGrid.flat().reduce((acc, val) => acc + (val === null ? 1 : 0), 0) === 83) {
+        startPlayerGame()
+    }
 }
 
 function placeShip(startIndex) {
-    if (positions.length > 4) return
     if (validatePlacement(startIndex)) {
-      let shipDetails = { orientation: currentOrientation }; 
       for (let i = 0; i < currentShipSize; i++) {
         const index = currentOrientation === 'horizontal' ? startIndex + i : startIndex + 10 * i;
-        if (index < 100) {
-            placementBoard[index] = 'ship'; 
+        const { y, x } = indexToLocation(index)
+        if (index < 100 && currentShip < 5) {
+            placementGrid[y][x] = currentPlayer.ships[currentShip]; 
             document.querySelectorAll('.cell')[index].style.backgroundColor = '#00bfff'; 
-            if (i === 0) { 
-                shipDetails.y = Math.floor(index / 10);
-                shipDetails.x = index % 10;
-            }
         }
       }
-      positions.push(shipDetails); 
-      updateShipSize(5 - positions.length)
+      currentShip++
+      updateShipSize()
     } else {
       console.log("Invalid placement. Try again.");
     }
+}
+
+const randomPlacement = () => {
+    if (currentShip >= 5) resetPlacement()
+    let attempts = 0;
+    while (currentShip < 5 && attempts < 100){
+        attempts++
+        currentOrientation = Math.random() < 0.5 ? 'horizontal' : 'vertical';
+        let index = Math.floor(Math.random() * 100);
+        placeShip(index);
+    }
+    console.log('Finished random in: ' + attempts + ' attempts')
 }
 
 function validatePlacement(startIndex) {
@@ -427,16 +496,17 @@ function isValidPlacement(index) {
     ];
 
     for (let adjIndex of adjacentIndices) {
+        const { y, x } = indexToLocation(adjIndex)
         if (adjIndex < 0 || adjIndex >= 100) continue; 
         if (Math.abs(adjIndex % 10 - index % 10) > 1) continue; 
-        if (placementBoard[adjIndex] === 'ship') return false; 
+        if (placementGrid[y][x] !== null) return false; 
     }
     return true;
 }
 
 function hoverShip(startIndex) {
     clearHover();
-    if (positions.length < 5) {
+    if (currentShip < 5) {
         if (!validatePlacement(startIndex)) {
             updateHoverEffect(startIndex, false);
         } else {
@@ -460,8 +530,8 @@ function updateHoverEffect(startIndex, isValid) {
 function clearHover() {
     const cells = document.querySelectorAll('.cell');
     cells.forEach(cell => {
-      const index = parseInt(cell.dataset.index);
-      if (placementBoard[index] !== 'ship') {
+      const { y, x } = indexToLocation(parseInt(cell.dataset.index));
+      if (placementGrid[y][x] === null) {
         cell.style.backgroundColor = null; 
       } else {
         cell.style.backgroundColor = '#00bfff'; 

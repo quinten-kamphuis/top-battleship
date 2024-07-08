@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <div id="playerSelectionScreen" class="screen" style="display: flex;">
         <div class="wrapper">
             <div class="wrapper">
@@ -16,20 +15,8 @@
                 <p>Choose your opponent below.</p>
             </div>
             <button id="playComputer" onclick="playComputerGame()">Play Against Computer</button>
-            <button id="playPlayer">Play Against Another Player</button>
+            <button id="playPlayer" onclick="playPlayerGame()">Play Against Another Player</button>
         </div>
     </div>
-    
-    <div id="gameScreen" class="screen" style="display: none;">
-        <div class="wrapper">
-            <h2>You</h2>
-            <div id="playerBoard" class="board"></div>
-        </div>
-        <div class="wrapper">
-            <h2>Opponent</h2>
-            <div id="opponentBoard" class="board"></div>
-        </div>
-    </div>
-
 </body>
 </html>
