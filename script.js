@@ -1,3 +1,119 @@
+const placeholderMap = {
+    "2,2": {
+        "length": 5,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "2,3": {
+        "length": 5,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "2,4": {
+        "length": 5,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "2,5": {
+        "length": 5,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "2,6": {
+        "length": 5,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "7,1": {
+        "length": 4,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "7,2": {
+        "length": 4,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "7,3": {
+        "length": 4,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "7,4": {
+        "length": 4,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "5,6": {
+        "length": 3,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "5,7": {
+        "length": 3,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "5,8": {
+        "length": 3,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "5,2": {
+        "length": 3,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "5,3": {
+        "length": 3,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "5,4": {
+        "length": 3,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "8,7": {
+        "length": 2,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    "8,8": {
+        "length": 2,
+        "orientation": "horizontal",
+        "hits": 0
+    }
+}
+
+const placeholderShips = [
+    {
+        "length": 5,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    {
+        "length": 4,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    {
+        "length": 3,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    {
+        "length": 3,
+        "orientation": "horizontal",
+        "hits": 0
+    },
+    {
+        "length": 2,
+        "orientation": "horizontal",
+        "hits": 0
+    }
+]
+
 const create2DArray = (size, initialValue = null) => {
     let array = [];
     for (let i = 0; i < size; i++) {
@@ -29,9 +145,9 @@ class Ship {
 
 class Gameboard {
     constructor() {
-      this.grid = create2DArray(10);
-      this.positionMap = {};
-      this.ships = []
+        this.grid = create2DArray(10);
+        this.positionMap = placeholderMap
+        this.ships = placeholderShips
     }
 
     placeShip(y, x, ship) {
@@ -116,6 +232,7 @@ class Player {
             new Ship(3), // Submarine
             new Ship(2)  // Destroyer
         ];
+        this.currentShipIndex = 0;
     }
 
     placeShips(positions) {
@@ -126,12 +243,11 @@ class Player {
             ship.orientation = pos.orientation;
             this.gameboard.placeShip(pos.y, pos.x, ship);
         });
-        console.log(this.gameboard.ships)
         if (this.gameboard.ships.length !== 0) return true
         if (this.gameboard.ships.length === 0) return false
     }
 
-    makeMove(x, y) {
+    makeMove(y, x) {
         // For human players, x and y would come from user input
         // For AI, generate x and y based on some logic
         return this.gameboard.receiveAttack(y, x);
@@ -139,6 +255,40 @@ class Player {
 }
 
 const screen = document.querySelector('.screen')
+
+const startGame = () => {
+    screen.innerHTML = 
+        `<div class="wrapper">
+            <h2>You</h2>
+            <div id="playerBoard" class="board"></div>
+        </div>
+        <div class="wrapper">
+            <h2>Opponent</h2>
+            <div id="opponentBoard" class="board"></div>
+        </div>`;
+
+    const playerBoard = screen.querySelector('#playerBoard')
+    const opponentBoard = screen.querySelector('#opponentBoard')
+    
+    for (let i = 0; i < 100; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.dataset.index = i;
+        cell.addEventListener('click', () => placeShip(i));
+        if (placementBoard[index] !== 'ship') {
+            cell.style.backgroundColor = null; 
+        }
+        playerBoard.appendChild(cell);
+    }
+    for (let i = 0; i < 100; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.classList.add('clickable');
+        cell.dataset.index = i;
+        cell.addEventListener('click', () => placeShip(i));
+        opponentBoard.appendChild(cell);
+    }
+}
 
 let player1;
 let player2;
@@ -148,18 +298,20 @@ const playComputerGame = () => {
         player1 = new Player("Player 1")
         player2 = new Player("Computer")
     }
-    if (player1.gameboard.ships.length === 5 && player1.gameboard.ships.length === 5) {
-        startGame()
-    }
-    loadPlacement()
-}
-
-const loadPlacement = () => {
     if (player1.gameboard.ships.length !== 5){
         currentPlayer = player1
-    } else {
+        loadPlacement()
+    } else if (player2.gameboard.ships.length !== 5) {
         currentPlayer = player2
+        loadPlacement()
+    } else if (player1.gameboard.ships.length === 5 && player2.gameboard.ships.length === 5) {
+        startGame()
     }
+}
+
+playComputerGame()
+
+const loadPlacement = () => {
 
     setTimeout(() => updateShipSize(), 0)
 
