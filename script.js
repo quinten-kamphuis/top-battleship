@@ -119,11 +119,16 @@ class Player {
     }
 
     placeShips(positions) {
+        this.gameboard.positionMap = {}
+        this.gameboard.ships = []
         this.ships.forEach((ship, index) => {
             const pos = positions[index];
             ship.orientation = pos.orientation;
             this.gameboard.placeShip(pos.y, pos.x, ship);
         });
+        console.log(this.gameboard.ships)
+        if (this.gameboard.ships.length !== 0) return true
+        if (this.gameboard.ships.length === 0) return false
     }
 
     makeMove(x, y) {
@@ -133,19 +138,44 @@ class Player {
     }
 }
 
+const screen = document.querySelector('.screen')
+
+let player1;
+let player2;
+
 const playComputerGame = () => {
+    if (!player1 || !player2) {
+        player1 = new Player("Player 1")
+        player2 = new Player("Computer")
+    }
+    if (player1.gameboard.ships.length === 5 && player1.gameboard.ships.length === 5) {
+        startGame()
+    }
+    loadPlacement()
+}
+
+const loadPlacement = () => {
+    if (player1.gameboard.ships.length !== 5){
+        currentPlayer = player1
+    } else {
+        currentPlayer = player2
+    }
+
+    setTimeout(() => updateShipSize(), 0)
+
     screen.innerHTML = 
         `<div class="wrapper">
-            <h1>Place Your Ships</h1>
+            <h1>${currentPlayer.name}, Place Your Ships</h1>
             <div id="placementBoard" class="board"></div>
             <div class="space-between">
                 <button onclick="rotateShip()">Rotate</button>
                 <div>
                     <button onclick="resetPlacement()">Reset</button>
-                    <button onclick="resetPlacement()">Continue</button>
+                    <button onclick="setPlacement()" class="finish-placement disabled">Continue</button>
                 </div>
             </div>
         </div>`;
+
     const board = screen.querySelector('#placementBoard')
     for (let i = 0; i < 100; i++) {
         const cell = document.createElement('div');
@@ -156,27 +186,47 @@ const playComputerGame = () => {
         cell.addEventListener('click', () => placeShip(i));
         board.appendChild(cell);
     }
+    resetPlacement();
 }
 
-const screen = document.querySelector('.screen')
+const setPlacement = () => {
+    if (currentPlayer.placeShips(positions)) {
+        console.log('Ships placed')
+        playComputerGame()
+    } else {
+        console.warn('Something went wrong, ships did not place')
+    }
+}
 
 let currentShipSize = 5; 
 let currentOrientation = 'horizontal';
+let currentPlayer;
 
-const positions = [
-    { y: 0, x: 0, orientation: "horizontal" }
-];
+const positions = [];
 const placementBoard = [];
+
+const updateShipSize = () => {
+    document.querySelector(".finish-placement").classList.add('disabled')
+    if (positions.length < 4) {
+        currentShipSize = 5 - positions.length
+    } else if (positions.length === 4){
+        currentShipSize = 2
+    } else if (positions.length === 5){
+        currentShipSize = 0
+        document.querySelector(".finish-placement").classList.remove('disabled')
+    }
+}
 
 const rotateShip = () => currentOrientation === 'horizontal' ? currentOrientation = 'vertical' : currentOrientation = 'horizontal'
 const resetPlacement = () => {
     positions.splice(0, positions.length)
     placementBoard.splice(0, placementBoard.length)
+    updateShipSize()
     clearHover()
 }
 
-
 function placeShip(startIndex) {
+    if (positions.length > 4) return
     if (validatePlacement(startIndex)) {
       let shipDetails = { orientation: currentOrientation }; 
       for (let i = 0; i < currentShipSize; i++) {
@@ -191,6 +241,7 @@ function placeShip(startIndex) {
         }
       }
       positions.push(shipDetails); 
+      updateShipSize(5 - positions.length)
     } else {
       console.log("Invalid placement. Try again.");
     }
@@ -216,7 +267,6 @@ function validatePlacement(startIndex) {
     return true;
 }
 
-
 function isValidPlacement(index) {
     const adjacentIndices = [
         index, index - 1, index + 1,
@@ -234,12 +284,14 @@ function isValidPlacement(index) {
 
 function hoverShip(startIndex) {
     clearHover();
-    if (!validatePlacement(startIndex)) {
-      updateHoverEffect(startIndex, false);
-    } else {
-      updateHoverEffect(startIndex, true);
+    if (positions.length < 5) {
+        if (!validatePlacement(startIndex)) {
+            updateHoverEffect(startIndex, false);
+        } else {
+            updateHoverEffect(startIndex, true);
+        }
     }
-  }
+}
 
 function updateHoverEffect(startIndex, isValid) {
     const cells = document.querySelectorAll('.cell');
@@ -264,7 +316,5 @@ function clearHover() {
       }
     });
 }
-
-playComputerGame();
 
 module.exports = { Ship, Gameboard, Player }
